@@ -1,2 +1,12 @@
 
 .DS_Store
+
+outline_cache/latex/__packages
+
+*.RData
+
+*.rdb
+
+*.pdf
+
+*.rdx

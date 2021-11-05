@@ -37,6 +37,7 @@ make_missing_figure <- function(var_miss, data) {
   
   ggpubr::ggarrange(fig_movie_mcar_1, fig_movie_mcar_2, fig_movie_mcar_3, fig_movie_mcar_4, common.legend = TRUE)
 }
+make_missing_figure(var_miss = "rating_mcar", data = orig_movie)
 
 # MAR - missingness depends on year 
 orig_movie %>% 

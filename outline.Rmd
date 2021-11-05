@@ -1,0 +1,118 @@
+---
+title: 'Filling in the Blanks: Multiply Imputing Missing Data in R'
+author: "Marissa Ashner & Sarah Lotspeich"
+date: "09 November 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE, cache = TRUE)
+```
+
+# Data 
+
+## Background 
+
+We use [Netflix data](https://data.world/hunterkempf/netflixocaug2020) from `data.world` as a motivating example for this activity. Specifically, we are interested in predicting the ratings of Netflix movies and series (separately) based on predictors: number of `votes` (log-transformed), `runtime`, `is_comedy` genre, and `is_drama` genre. 
+
+In each dataset, we have included three versions of the outcome variable, `rating`, to demonstrate the different types of missingness: `rating_mcar` for missing completely at random (MCAR), `rating_mar` for missing at random (MAR), and `rating_mnar` for missing not at random (MNAR).
+
+## Movie Ratings
+
+```{r}
+movies <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/movies.csv")
+head(movies)
+```
+
+## Series Ratings
+
+```{r}
+series <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/series.csv")
+head(series)
+```
+
+# Describing Missingness 
+
+Since we only have missingness in `rating`, we can summarize this with a simple **percent missing**. Practice calculating the percent of missing `rating` variables below... 
+
+```{r}
+# Missingness in movie ratings
+mean(is.na(movies$rating_mcar))
+mean(is.na(movies$rating_mar))
+mean(is.na(movies$rating_mnar))
+
+# Missingness in series ratings
+mean(is.na(series$rating_mcar))
+mean(is.na(series$rating_mar))
+mean(is.na(series$rating_mnar))
+```
+
+If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar`) to help visualize **missingness patterns** across variables. We can use one here to see how often subjects were missing across the MCAR, MAR, and MNAR versions of `rating`. 
+
+```{r}
+naniar::gg_miss_upset(movies, nset = 20)
+naniar::gg_miss_upset(series)
+```
+
+
+\clearpage 
+
+# Models 
+
+## Predicting Movie Ratings with Linear Regression
+
+We have independent observations on `r movies %>% nrow()` Netflix movies. To predict ratings, we will fit a **normal linear regression** model: 
+
+
+Fit the true model using complete data on everyone (hint: use the fully observed outcome `rating`)
+
+```{r}
+summary(lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+   data = movies))
+```
+
+## Predicting Episode Ratings with Generalized Estimating Equations (GEE)
+
+```{r}
+series %>% dplyr::arrange(series_imdb_id, season, episode) -> series
+geepack::geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+               data = series, 
+               id = series_imdb_id)
+```
+
+# Simple Approaches *(for Independent or Dependent Data)*
+## Complete Case Analysis
+The **complete case analysis** simply excludes any subjects who have missing data in any of the variables of interest (outcome or predictors). Compare the complete case analysis for `rating_mcar` in `movies` to the true model above.
+
+```{r}
+summary(lm(formula = rating_mcar ~ log(votes) + runtime + is_comedy + is_drama, data = movies))
+```
+
+## Single Imputation 
+
+**Single imputation** usually involves "filling in the blanks" with a numerical summary of the non-missing values. 
+
+For example, we might replace missing movie `ratings` with the mean or median. Try this with `ratings_mcar` below.
+
+```{r}
+(mean_rating <- mean(movies$rating_mcar, na.rm = TRUE))
+movies %>% 
+  dplyr::mutate(rating_si = ifelse(is.na(rating_mcar), mean_rating, rating)) -> movies
+mov_si_mcar <- lm(formula = rating_si ~ log(votes) + runtime + is_comedy + is_drama, data = movies)
+```
+
+We could also get a little fancy and do *conditional* mean imputation by replacing missing ratings with group-specific means like mean rating for a comedy versus mean rating for a drama. 
+
+
+# Simple Approaches *(for Dependent Data)*
+
+The `series` dataset could be considered longitudinal (we have multiple episodes per series and these episodes are believed to be correlated). We can take advantage of the dependence in these data to do series-specific imputation, rather than overall as above.
+
+Consider data on the Great British Baking Show.... there are `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% nrow()` episodes. Of them, `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% dplyr::filter(is.na(rating_mcar)) %>% nrow()` are missing their `rating_mcar`. We have two options: 
+
+  1. Replace missing values with the average rating for an episode of the Great British Baking Show
+  2. Assume that the missing value is the same as non-missing rating for the episode that came before it 
+
+## Single Imputation within `series`
+
