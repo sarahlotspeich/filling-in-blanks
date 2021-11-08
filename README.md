@@ -37,6 +37,13 @@ Variables included in the `movies` dataset are as follow:
 ```{r, eval = T}
 movies <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/movies.csv")
 head(movies)
+        series_name rating votes runtime is_comedy is_drama rating_miss
+1      An Easy Girl    5.5  1519      92         1        1          NA
+2       The Week Of    5.1 17594     116         1        0         5.1
+3    Murder Mystery    6.0 94014      97         1        0         6.0
+4        Sextuplets    4.4  6784      97         1        0         4.4
+5 The Kissing Booth    6.0 60140     105         1        0         6.0
+6      #REALITYHIGH    5.2  5332      99         1        1         5.2
 ```
 
 ## Series Ratings
@@ -49,4 +56,11 @@ In addition to the same variables as above, the `series` dataset contains the fo
 ```{r, eval = T}
 series <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/series.csv")
 head(series)
+     series_name series_num season episode rating votes runtime is_comedy is_drama rating_miss
+1 13 Reasons Why          1      1       1    8.3  6952      54         0        1         8.3
+2 13 Reasons Why          1      1       2    8.0  5803      52         0        1         8.0
+3 13 Reasons Why          1      1       3    7.9  5453      57         0        1          NA
+4 13 Reasons Why          1      1       4    8.1  5260      57         0        1         8.1
+5 13 Reasons Why          1      1       5    8.2  5202      59         0        1         8.2
+6 13 Reasons Why          1      1       6    8.0  5015      52         0        1         8.0
 ```
