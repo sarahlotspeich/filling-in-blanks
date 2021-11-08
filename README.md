@@ -101,7 +101,9 @@ We have independent observations on 97 Netflix movies. To predict ratings, we wi
 # Fit the *true* (i.e., no missing data) movie ratings model using lm()
 summary(lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
            data = movies))
-           
+```
+
+```{r}
 Call:
 lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
     data = movies)
@@ -134,7 +136,9 @@ We have dependent (i.e., correlated within-series) observations on 279 Netflix s
 summary(geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
               data = series, 
               id = series_num))
-              
+```
+
+```{r}
 Call:
 geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
     id = series_num, data = series)
