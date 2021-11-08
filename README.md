@@ -203,3 +203,55 @@ Residual standard error: 0.8994 on 72 degrees of freedom
 Multiple R-squared:  0.1283,	Adjusted R-squared:  0.07988 
 F-statistic:  2.65 on 4 and 72 DF,  p-value: 0.04006
 ```
+
+## Single Imputation 
+
+**Single imputation** usually involves "filling in the blanks" with a numerical summary of the non-missing values. 
+
+For example, we might replace missing movie `rating_miss` with the mean or median. I like to do this using `dplyr::mutate()`. 
+
+```{r}
+# Replace missing rating_miss values with the mean of the non-missing values 
+movies %>% 
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), mean(rating_miss, na.rm = TRUE), rating_miss)) -> movies
+head(movies)
+        series_name rating votes runtime is_comedy is_drama rating_miss rating_imp
+1      An Easy Girl    5.5  1519      92         1        1          NA   6.180519
+2       The Week Of    5.1 17594     116         1        0         5.1   5.100000
+3    Murder Mystery    6.0 94014      97         1        0         6.0   6.000000
+4        Sextuplets    4.4  6784      97         1        0         4.4   4.400000
+5 The Kissing Booth    6.0 60140     105         1        0         6.0   6.000000
+6      #REALITYHIGH    5.2  5332      99         1        1         5.2   5.200000
+```
+
+```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+summary(lm(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
+        data = movies))
+```
+
+```{r}
+Call:
+lm(formula = rating_imp ~ log(votes) + runtime + is_comedy + 
+    is_drama, data = movies)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.96885 -0.46802 -0.03898  0.49155  2.30436 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  6.298451   0.457326  13.772  < 2e-16 ***
+log(votes)   0.119399   0.053489   2.232  0.02803 *  
+runtime     -0.010854   0.004101  -2.647  0.00956 ** 
+is_comedy   -0.219251   0.213327  -1.028  0.30675    
+is_drama     0.058926   0.207882   0.283  0.77746    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.8148 on 92 degrees of freedom
+Multiple R-squared:  0.08586,	Adjusted R-squared:  0.04611 
+F-statistic:  2.16 on 4 and 92 DF,  p-value: 0.07965
+```
+
+We could also get a little fancy and do *conditional* mean imputation by replacing missing ratings with group-specific means like mean rating for a comedy versus mean rating for a drama. 
