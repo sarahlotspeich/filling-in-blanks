@@ -285,6 +285,7 @@ series %>%
 ```
 
 ```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
 summary(geepack::geese(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
                data = series, 
                id = series_num))
