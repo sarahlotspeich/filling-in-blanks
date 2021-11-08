@@ -79,7 +79,7 @@ mean(is.na(series$rating_miss))
 [1] 0.1970006
 ```
 
-If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar::gg_miss_upset()`) to help visualize **missingness patterns** across variables. We can use one here to see how often subjects were missing across the MCAR, MAR, and MNAR versions of `rating`. 
+If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar::gg_miss_upset()`) to help visualize **missingness patterns** across variables. 
 
 # Models 
 
