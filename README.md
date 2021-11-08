@@ -272,6 +272,10 @@ Consider data on the Great British Baking Show.... there are 109 episodes. Of th
 series %>% 
   dplyr::group_by(series_name) %>% 
   dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), mean(rating_miss, na.rm = TRUE), rating_miss)) -> series
+```
+
+```{r}
+# Check your imputations for the Great British Baking Show  
 series %>% 
   dplyr::filter(series_name == "The Great British Baking Show") %>% 
   head()
@@ -320,4 +324,65 @@ Correlation Model:
 
 Returned Error Value:    0 
 Number of clusters:   270   Maximum cluster size: 1011 
+```
+
+## Carry-Forward Imputation
+
+```{r}
+# Replace missing rating_miss values with the preceding non-missing value *for the same series*
+series %>% 
+  dplyr::group_by(series_num) %>% 
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), dplyr::lag(x = rating_miss, n = 1, default = NA), rating_miss)) -> series
+```
+
+```{r}
+# Check your imputations for the Great British Baking Show
+series %>% 
+  dplyr::filter(series_name == "The Great British Baking Show") %>% 
+  head()  
+  series_name                   series_num season episode rating votes runtime is_comedy is_drama rating_miss rating_imp
+1 The Great British Baking Show        217      1       1    8.2    58      58         0        0        NA         NA  
+2 The Great British Baking Show        217      1       2    8      38      58         0        0         8          8  
+3 The Great British Baking Show        217      1       3    8.1    33      58         0        0         8.1        8.1
+4 The Great British Baking Show        217      1       4    8      32      52         0        0         8          8  
+5 The Great British Baking Show        217      1       5    8      33      58         0        0        NA          8  
+6 The Great British Baking Show        217      1       6    8.2    30      58         0        0         8.2        8.2  
+```
+
+```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+summary(geepack::geese(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
+               data = series, 
+               id = series_num))
+```
+
+```{r}
+Call:
+geepack::geese(formula = rating_imp ~ log(votes) + runtime + 
+    is_comedy + is_drama, id = series_num, data = series)
+
+Mean Model:
+ Mean Link:                 identity 
+ Variance to Mean Relation: gaussian 
+
+ Coefficients:
+              estimate      san.se        wald            p
+(Intercept) 6.30915603 0.307154813 421.9178380 0.0000000000
+log(votes)  0.12395793 0.034312928  13.0506780 0.0003031746
+runtime     0.01116104 0.003021178  13.6476165 0.0002205211
+is_comedy   0.08922310 0.143918414   0.3843456 0.5352866869
+is_drama    0.43690914 0.178660264   5.9803461 0.0144661634
+
+Scale Model:
+ Scale Link:                identity 
+
+ Estimated Scale Parameters:
+             estimate     san.se     wald p
+(Intercept) 0.6766529 0.05379602 158.2091 0
+
+Correlation Model:
+ Correlation Structure:     independence 
+
+Returned Error Value:    0 
+Number of clusters:   270   Maximum cluster size: 980 
 ```
