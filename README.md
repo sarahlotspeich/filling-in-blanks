@@ -208,7 +208,7 @@ F-statistic:  2.65 on 4 and 72 DF,  p-value: 0.04006
 
 **Single imputation** usually involves "filling in the blanks" with a numerical summary of the non-missing values. 
 
-For example, we might replace missing movie `rating_miss` with the mean or median. I like to do this using `dplyr::mutate()`. 
+For example, we might replace missing movie `rating_miss` with the mean or median. We can do this using `dplyr::mutate()`. 
 
 ```{r}
 # Replace missing rating_miss values with the mean of the non-missing values 
