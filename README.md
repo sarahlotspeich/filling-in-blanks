@@ -64,3 +64,93 @@ head(series)
 5 13 Reasons Why          1      1       5    8.2  5202      59         0        1         8.2
 6 13 Reasons Why          1      1       6    8.0  5015      52         0        1         8.0
 ```
+
+# Describing Missingness 
+
+Since we only have missingness in `rating`, we can summarize this with a simple **percent missing**. Practice calculating the percent of missing `rating` variables below... 
+
+```{r}
+# Missingness in movie ratings
+mean(is.na(movies$rating_miss))
+[1] 0.2061856
+
+# Missingness in series ratings
+mean(is.na(series$rating_miss))
+[1] 0.1970006
+```
+
+If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar::gg_miss_upset()`) to help visualize **missingness patterns** across variables. We can use one here to see how often subjects were missing across the MCAR, MAR, and MNAR versions of `rating`. 
+
+# Models 
+
+Fit the true models using complete data on everyone (hint: use the fully observed outcome `rating`).
+
+## Predicting Movie Ratings with Linear Regression
+
+We have independent observations on 97 Netflix movies. To predict ratings, we will fit a **normal linear regression** model: 
+
+```{r}
+summary(lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+           data = movies))
+           
+Call:
+lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+    data = movies)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.15013 -0.63526 -0.07633  0.53881  2.54139 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  6.132787   0.503494  12.180  < 2e-16 ***
+log(votes)   0.227211   0.058889   3.858 0.000212 ***
+runtime     -0.018322   0.004515  -4.058 0.000104 ***
+is_comedy   -0.327467   0.234864  -1.394 0.166589    
+is_drama     0.187928   0.228869   0.821 0.413701    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.8971 on 92 degrees of freedom
+Multiple R-squared:  0.1967,	Adjusted R-squared:  0.1618 
+F-statistic: 5.633 on 4 and 92 DF,  p-value: 0.0004225
+```
+
+## Predicting Episode Ratings with Generalized Estimating Equations (GEE)
+
+We have dependent (i.e., correlated within-series) observations on 279 Netflix shows. To predict ratings, we will fit a **Generalized Estimating Equations (GEE)**. For now you'll just have to trust us on this, but if you're interested in learning more about GEE here's a nice document from [Penn State](https://online.stat.psu.edu/stat504/lesson/12/12.1). 
+
+```{r}
+summary(geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+              data = series, 
+              id = series_num))
+              
+Call:
+geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
+    id = series_num, data = series)
+
+Mean Model:
+ Mean Link:                 identity 
+ Variance to Mean Relation: gaussian 
+
+ Coefficients:
+              estimate      san.se        wald            p
+(Intercept) 6.30605556 0.305648149 425.6690237 0.0000000000
+log(votes)  0.12387523 0.034366026  12.9930251 0.0003126534
+runtime     0.01096477 0.003011369  13.2577836 0.0002714504
+is_comedy   0.10306925 0.143166353   0.5182941 0.4715702700
+is_drama    0.44508262 0.176422884   6.3646047 0.0116419028
+
+Scale Model:
+ Scale Link:                identity 
+
+ Estimated Scale Parameters:
+             estimate     san.se     wald p
+(Intercept) 0.6942684 0.05755642 145.5014 0
+
+Correlation Model:
+ Correlation Structure:     independence 
+
+Returned Error Value:    0 
+Number of clusters:   279   Maximum cluster size: 1011
+```
