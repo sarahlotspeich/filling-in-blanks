@@ -173,7 +173,9 @@ The **complete case analysis** simply excludes any subjects who have missing dat
 # Fit the complete case model for movie ratings using lm()
 summary(lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + is_drama, 
            data = movies))
-           
+```
+
+```{r}
 Call:
 lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + 
     is_drama, data = movies)
