@@ -260,7 +260,7 @@ We could also get a little fancy and do *conditional* mean imputation by replaci
 
 The `series` dataset could be considered longitudinal (we have multiple episodes per series and these episodes are believed to be correlated). We can take advantage of the dependence in these data to do series-specific imputation, rather than overall as above.
 
-Consider data on the Great British Baking Show.... there are `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% nrow()` episodes. Of them, `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% dplyr::filter(is.na(rating_miss)) %>% nrow()` are missing their `rating_miss`. We have two options: 
+Consider data on the Great British Baking Show.... there are 109 episodes. Of them, 22 are missing their `rating_miss`. We have two options: 
 
   1. Replace missing values with the average rating for an episode of the Great British Baking Show
   2. Assume that the missing value is the same as non-missing rating for the episode that came before it 
