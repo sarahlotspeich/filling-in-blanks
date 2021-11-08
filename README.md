@@ -2,12 +2,18 @@
 ## Marissa Ashner, PhD(C) and Sarah Lotspeich, PhD
 ### Code for presentation for R-Ladies Research Triangle Park, North Carolina
 
+```{r, eval = T}
+# (If needed) Install packages
+# install.packages(c("magrittr", "dplyr", "ggplot2", "geepack", "mice"))
+```
 
 ```{r, eval = T}
 # Load packages
 library(magrittr)
 library(dplyr)
+library(ggplot2)
 library(geepack)
+library(mice)
 ```
 
 # Data 
@@ -35,6 +41,7 @@ Variables included in the `movies` dataset are as follow:
   - `rating_miss`: mean audience rating between 0 and 10 (with missing data)
 
 ```{r, eval = T}
+# Read in movies data
 movies <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/movies.csv")
 head(movies)
         series_name rating votes runtime is_comedy is_drama rating_miss
@@ -54,6 +61,7 @@ In addition to the same variables as above, the `series` dataset contains the fo
   - `episode`: series episode 
 
 ```{r, eval = T}
+# Read in series data
 series <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/series.csv")
 head(series)
      series_name series_num season episode rating votes runtime is_comedy is_drama rating_miss
@@ -90,6 +98,7 @@ Fit the true models using complete data on everyone (hint: use the fully observe
 We have independent observations on 97 Netflix movies. To predict ratings, we will fit a **normal linear regression** model: 
 
 ```{r}
+# Fit the *true* (i.e., no missing data) movie ratings model using lm()
 summary(lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
            data = movies))
            
@@ -121,6 +130,7 @@ F-statistic: 5.633 on 4 and 92 DF,  p-value: 0.0004225
 We have dependent (i.e., correlated within-series) observations on 279 Netflix shows. To predict ratings, we will fit a **Generalized Estimating Equations (GEE)**. For now you'll just have to trust us on this, but if you're interested in learning more about GEE here's a nice document from [Penn State](https://online.stat.psu.edu/stat504/lesson/12/12.1). 
 
 ```{r}
+# Fit the *true* (i.e., no missing data) series episode ratings model using geese()
 summary(geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
               data = series, 
               id = series_num))
@@ -153,4 +163,37 @@ Correlation Model:
 
 Returned Error Value:    0 
 Number of clusters:   279   Maximum cluster size: 1011
+```
+
+# Simple Approaches *(for Independent or Dependent Data)*
+## Complete Case Analysis
+The **complete case analysis** simply excludes any subjects who have missing data in any of the variables of interest (outcome or predictors). Compare the complete case analysis in `movies` to the true model above.
+
+```{r}
+# Fit the complete case model for movie ratings using lm()
+summary(lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + is_drama, 
+           data = movies))
+           
+Call:
+lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + 
+    is_drama, data = movies)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-2.13752 -0.63781 -0.01549  0.60496  2.53750 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  6.418334   0.556331  11.537  < 2e-16 ***
+log(votes)   0.173887   0.068527   2.538  0.01333 *  
+runtime     -0.016215   0.005415  -2.994  0.00377 ** 
+is_comedy   -0.330873   0.260432  -1.270  0.20800    
+is_drama     0.138777   0.266709   0.520  0.60443    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.8994 on 72 degrees of freedom
+  (20 observations deleted due to missingness)
+Multiple R-squared:  0.1283,	Adjusted R-squared:  0.07988 
+F-statistic:  2.65 on 4 and 72 DF,  p-value: 0.04006
 ```
