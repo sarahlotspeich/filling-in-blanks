@@ -255,3 +255,68 @@ F-statistic:  2.16 on 4 and 92 DF,  p-value: 0.07965
 ```
 
 We could also get a little fancy and do *conditional* mean imputation by replacing missing ratings with group-specific means like mean rating for a comedy versus mean rating for a drama. 
+
+# Simple Approaches *(for Dependent Data)*
+
+The `series` dataset could be considered longitudinal (we have multiple episodes per series and these episodes are believed to be correlated). We can take advantage of the dependence in these data to do series-specific imputation, rather than overall as above.
+
+Consider data on the Great British Baking Show.... there are `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% nrow()` episodes. Of them, `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% dplyr::filter(is.na(rating_miss)) %>% nrow()` are missing their `rating_miss`. We have two options: 
+
+  1. Replace missing values with the average rating for an episode of the Great British Baking Show
+  2. Assume that the missing value is the same as non-missing rating for the episode that came before it 
+
+## Within-Series Single Imputation
+
+```{r}
+# Replace missing rating_miss values with the mean of the non-missing values *for the same series*
+series %>% 
+  dplyr::group_by(series_name) %>% 
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), mean(rating_miss, na.rm = TRUE), rating_miss)) -> series
+series %>% 
+  dplyr::filter(series_name == "The Great British Baking Show") %>% 
+  head()
+    series_name                   series_num season episode rating votes runtime is_comedy is_drama rating_miss rating_imp
+1 The Great British Baking Show        217      1       1    8.2    58      58         0        0        NA         8.21
+2 The Great British Baking Show        217      1       2    8      38      58         0        0         8         8   
+3 The Great British Baking Show        217      1       3    8.1    33      58         0        0         8.1       8.1 
+4 The Great British Baking Show        217      1       4    8      32      52         0        0         8         8   
+5 The Great British Baking Show        217      1       5    8      33      58         0        0        NA         8.21
+6 The Great British Baking Show        217      1       6    8.2    30      58         0        0         8.2       8.2 
+```
+
+```{r}
+summary(geepack::geese(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
+               data = series, 
+               id = series_num))
+```
+
+```{r}
+Call:
+geepack::geese(formula = rating_imp ~ log(votes) + runtime + 
+    is_comedy + is_drama, id = series_num, data = series)
+
+Mean Model:
+ Mean Link:                 identity 
+ Variance to Mean Relation: gaussian 
+
+ Coefficients:
+              estimate      san.se        wald            p
+(Intercept) 6.33885113 0.300512047 444.9357816 0.0000000000
+log(votes)  0.12001612 0.033523938  12.8164908 0.0003435775
+runtime     0.01073265 0.002959478  13.1517615 0.0002872491
+is_comedy   0.08538074 0.144812107   0.3476242 0.5554610806
+is_drama    0.45007802 0.183754852   5.9992642 0.0143118461
+
+Scale Model:
+ Scale Link:                identity 
+
+ Estimated Scale Parameters:
+             estimate     san.se     wald p
+(Intercept) 0.6461798 0.05419907 142.1422 0
+
+Correlation Model:
+ Correlation Structure:     independence 
+
+Returned Error Value:    0 
+Number of clusters:   270   Maximum cluster size: 1011 
+```
