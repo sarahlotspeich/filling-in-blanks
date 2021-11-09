@@ -6,8 +6,22 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
+```
+
+```{r, eval = T}
+# (If needed) Install packages
+# install.packages(c("magrittr", "dplyr", "ggplot2", "geepack", "MASS", "mice"))
+```
+
+```{r, eval = T}
+# Load packages
 library(magrittr)
-knitr::opts_chunk$set(echo = TRUE, tidy = TRUE, cache = TRUE)
+library(dplyr)
+library(ggplot2)
+library(geepack)
+library(MASS)
+library(mice)
 ```
 
 # Data 
@@ -24,74 +38,93 @@ In the `~/data/` sub-directory, we have included three versions of the `movies` 
 
 ## Movie Ratings
 
-```{r}
+Variables included in the `movies` dataset are as follow: 
+
+  - `series_name`: movie title
+  - `rating`: mean audience rating between 0 and 10 (fully observed)
+  - `votes`: number of audience votes for `rating`
+  - `runtime`: run time (in minutes)
+  - `is_comedy`: indicator of whether the movie genres included "comedy"
+  - `is_drama`: indicator of whether the movie genres included "drama"
+  - `rating_miss`: mean audience rating between 0 and 10 (with missing data)
+
+```{r, eval = T}
+# Read in movies data
 movies <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/movies.csv")
 head(movies)
 ```
 
 ## Series Ratings
 
-```{r}
+In addition to the same variables as above, the `series` dataset contains the following: 
+
+  - `season`: series season
+  - `episode`: series episode 
+
+```{r, eval = T}
+# Read in series data
 series <- read.csv("https://raw.githubusercontent.com/sarahlotspeich/filling-in-blanks/main/data/MCAR/series.csv")
 head(series)
 ```
 
-# Describing Missingness 
-
-Since we only have missingness in `rating`, we can summarize this with a simple **percent missing**. Practice calculating the percent of missing `rating` variables below... 
-
-```{r}
-# Missingness in movie ratings
-mean(is.na(movies$rating_miss))
-
-# Missingness in series ratings
-mean(is.na(series$rating_miss))
-```
-
-If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar::gg_miss_upset()`) to help visualize **missingness patterns** across variables. We can use one here to see how often subjects were missing across the MCAR, MAR, and MNAR versions of `rating`. 
-
 # Models 
+
+Fit the true models using complete data on everyone (hint: use the fully observed outcome `rating`).
 
 ## Predicting Movie Ratings with Linear Regression
 
-We have independent observations on `r movies %>% nrow()` Netflix movies. To predict ratings, we will fit a **normal linear regression** model: 
-
-
-Fit the true model using complete data on everyone (hint: use the fully observed outcome `rating`)
+We have independent observations on `r nrow(movies)` Netflix movies. To predict ratings, we will fit a **normal linear regression** model: 
 
 ```{r}
-summary(lm(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
-   data = movies))
+# Fit the *true* (i.e., no missing data) movie ratings model using lm()
 ```
 
 ## Predicting Episode Ratings with Generalized Estimating Equations (GEE)
 
+We have dependent (i.e., correlated within-series) observations on 279 Netflix shows. To predict ratings, we will fit a **Generalized Estimating Equations (GEE)**. For now you'll just have to trust us on this, but if you're interested in learning more about GEE here's a nice document from [Penn State](https://online.stat.psu.edu/stat504/lesson/12/12.1). 
+
 ```{r}
-series %>% dplyr::arrange(series_imdb_id, season, episode) -> series
-geepack::geese(formula = rating ~ log(votes) + runtime + is_comedy + is_drama, 
-               data = series, 
-               id = series_imdb_id)
+# Fit the *true* (i.e., no missing data) series episode ratings model using geese()
 ```
+
+
+# Describing Missingness 
+
+Since we only have missingness in `rating_miss`, we can summarize this with a simple **percent missing**. Practice calculating the percent of missing `rating` variables below... 
+
+```{r}
+# Calculate percent missingness in movie ratings
+
+
+# Calculate percent missingness in series ratings
+
+```
+
+If we had multiple variables with missing data, we would want to consider something more sophisticated. For example, there are a number of neat `R` packages (like `naniar::gg_miss_upset()`) to help visualize **missingness patterns** across variables.
 
 # Simple Approaches *(for Independent or Dependent Data)*
 ## Complete Case Analysis
-The **complete case analysis** simply excludes any subjects who have missing data in any of the variables of interest (outcome or predictors). Compare the complete case analysis for `rating_mcar` in `movies` to the true model above.
+The **complete case analysis** simply excludes any subjects who have missing data in any of the variables of interest (outcome or predictors). Compare the complete case analysis in `movies` to the true model above.
 
 ```{r}
-summary(lm(formula = rating_mcar ~ log(votes) + runtime + is_comedy + is_drama, data = movies))
+# Fit the complete case model for movie ratings using lm()
+
 ```
 
 ## Single Imputation 
 
 **Single imputation** usually involves "filling in the blanks" with a numerical summary of the non-missing values. 
 
-For example, we might replace missing movie `ratings` with the mean or median. Try this with `ratings_mcar` below.
+For example, we might replace missing movie `rating_miss` with the mean or median. I like to do this using `dplyr::mutate()`. 
 
 ```{r}
-(mean_rating <- mean(movies$rating_mcar, na.rm = TRUE))
-movies %>% 
-  dplyr::mutate(rating_si = ifelse(is.na(rating_mcar), mean_rating, rating)) -> movies
-mov_si_mcar <- lm(formula = rating_si ~ log(votes) + runtime + is_comedy + is_drama, data = movies)
+# Replace missing rating_miss values with the mean of the non-missing values
+
+```
+
+```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+
 ```
 
 We could also get a little fancy and do *conditional* mean imputation by replacing missing ratings with group-specific means like mean rating for a comedy versus mean rating for a drama. 
@@ -100,7 +133,7 @@ We could also get a little fancy and do *conditional* mean imputation by replaci
 
 The `series` dataset could be considered longitudinal (we have multiple episodes per series and these episodes are believed to be correlated). We can take advantage of the dependence in these data to do series-specific imputation, rather than overall as above.
 
-Consider data on the Great British Baking Show.... there are `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% nrow()` episodes. Of them, `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% dplyr::filter(is.na(rating_mcar)) %>% nrow()` are missing their `rating_mcar`. We have two options: 
+Consider data on the Great British Baking Show.... there are 109 episodes. Of them, `r series %>% dplyr::filter(series_name == "The Great British Baking Show") %>% dplyr::filter(is.na(rating_miss)) %>% nrow()` are missing their `rating_miss`. We have two options: 
 
   1. Replace missing values with the average rating for an episode of the Great British Baking Show
   2. Assume that the missing value is the same as non-missing rating for the episode that came before it 
@@ -108,15 +141,116 @@ Consider data on the Great British Baking Show.... there are `r series %>% dplyr
 ## Within-Series Single Imputation
 
 ```{r}
-# Calculate the mean rating for each series
-series %>% 
-  dplyr::group_by(series_name) %>% 
-  dplyr::mutate(series_mean_imp = ifelse(is.na(rating_mcar), mean(rating_mcar, na.rm = TRUE), rating_mcar)) -> series
+# Replace missing rating_miss values with the mean of the non-missing values *for the same series*
 
-series %>% 
-  dplyr::filter(series_name == "The Great British Baking Show") %>% 
-  head()
+```
+
+
+```{r}
+# Check your imputations for the Great British Baking Show
+
+```
+
+```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+
 ```
 
 ## Carry-Forward Imputation
 
+```{r}
+# Replace missing rating_miss values with the preceding non-missing value *for the same series*
+
+```
+
+```{r}
+# Check your imputations for the Great British Baking Show
+
+```
+
+```{r}
+# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+
+```
+
+
+# Multiple Imputation 
+
+Use subjects without missing data to fit the imputation model for `rating_miss` in the `movies` data. Save the model coefficients and their covariance matrix. 
+
+```{r}
+# Fit the imputation model for movies rating (complete-case) 
+
+
+# Save the imputation model coefficients
+
+
+# Save the imputation model covariance matrix
+
+```
+
+This model is fit only once, but we wanted multiple, different imputed datasets didn't we? *We did.*
+
+Within each of the `m` imputations (we assume `m = 20`), we draw coefficients from the distribution based on the imputation model above and calculate imputed values. 
+
+```{r}
+# Step 1: Imputation 
+## Draw coefficients from the multivariate normal distribution based on `imp_mod`
+
+
+## Use the drawn coefficients to calculate imputed values 
+
+
+## Replace with the non-missing ratings
+
+```
+
+The analysis model of interest is fit to each of the $m$ imputed datasets. 
+
+```{r}
+# Step 2: Analysis
+## Fit the analysis model to the imputed dataset 
+
+
+## Save the analysis model coefficients
+
+
+## Save the analysis  model covariance matrix
+
+```
+
+Now, embed your code from Steps 1--2 into a *multiple* imputation framework (i.e., we want to repeat this process $m$ times).
+
+```{r}
+# We use 20 imputations 
+m <- 20 
+
+# Create a list to store model fits from each round of imputation 
+all_imp <- list()
+
+# Repeat Imputation & Analysis steps m times 
+
+```
+
+Use Rubin's Rules to pool the parameter and covariance estimates from the $m$ imputations that are stored in `all_imp`. 
+
+```{r}
+# Step 3: Pool
+## Extract the coefficient estimates from each model 
+
+## Calculate the mean coefficient for each variable 
+
+## Extract the coefficients' variance estimates from each model 
+
+## Calculate the within-imputation variance for each variable 
+
+## Calculate the between-imputation variance for each variable
+### Subtract beta_hat from each imputation's coefficients 
+
+### Sum over the squared values of d (within each coefficient)
+
+### Pre-multiply by m / (m + 1)
+
+## Calculate the pooled variance = within- + between- 
+
+```
