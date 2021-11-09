@@ -402,7 +402,24 @@ Use subjects without missing data to fit the imputation model for `rating_miss` 
 imp_mod <- lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + is_drama, 
               data = movies)
 # Save the imputation model coefficients
-imp_coeff <- imp_mod$coefficients
+(imp_coeff <- imp_mod$coefficients)
+```
+
+```{r}
+(Intercept)  log(votes)     runtime   is_comedy    is_drama 
+ 6.41833383  0.17388746 -0.01621476 -0.33087338  0.13877701 
+```
+
+```{r}
 # Save the imputation model covariance matrix
 imp_cov <- vcov(imp_mod)
+```
+
+```{r}
+              (Intercept)    log(votes)       runtime    is_comedy      is_drama
+(Intercept)  0.3095042533 -0.0184436224 -9.934479e-04 -0.064950367  0.0103304061
+log(votes)  -0.0184436224  0.0046959176 -2.168729e-04 -0.001805841 -0.0013836084
+runtime     -0.0009934479 -0.0002168729  2.932595e-05  0.000257734 -0.0003179052
+is_comedy   -0.0649503672 -0.0018058410  2.577340e-04  0.067824794  0.0179655741
+is_drama     0.0103304061 -0.0013836084 -3.179052e-04  0.017965574  0.0711337253
 ```
