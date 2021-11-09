@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, tidy = TRUE)
 
 ```{r, eval = T}
 # (If needed) Install packages
-# install.packages(c("magrittr", "dplyr", "ggplot2", "geepack", "MASS", "mice"))
+# install.packages(c("magrittr", "dplyr", "ggplot2", "geepack", "MASS"))
 ```
 
 ```{r, eval = T}
