@@ -487,3 +487,24 @@ for (k in 1:m) {
   all_imp[[length(all_imp) + 1]] <- fit_m
 }
 ```
+
+Use Rubin's Rules to pool the parameter and covariance estimates from the `m` imputations that are stored in `all_imp`. 
+
+```{r}
+# Step 3: Pool
+## Extract the coefficient estimates from each model 
+all_imp_coeff <- do.call(rbind, lapply(X = all_imp, FUN = coefficients))
+head(all_imp_coeff)
+     (Intercept) log(votes)     runtime  is_comedy   is_drama
+[1,]    6.441845  0.1864583 -0.01711640 -0.4077372 0.13169405
+[2,]    6.264469  0.1427084 -0.01257280 -0.1759375 0.08324976
+[3,]    6.680133  0.1725428 -0.01881188 -0.3627855 0.25052812
+[4,]    6.315815  0.2063566 -0.01777213 -0.3546369 0.08847459
+[5,]    6.406188  0.1842048 -0.01704377 -0.3704962 0.12012270
+[6,]    6.465431  0.1871892 -0.01765386 -0.3715542 0.19141473
+
+## Calculate the mean coefficient for each variable 
+(beta_hat <- colMeans(all_imp_coeff))
+(Intercept)  log(votes)     runtime   is_comedy    is_drama 
+ 6.44014194  0.17390227 -0.01651444 -0.33668693  0.15367396 
+```
