@@ -439,3 +439,17 @@ imp_m <- coeff_m[1] + coeff_m[2] * log(movies$votes) + coeff_m[3] * movies$runti
 # Replace with the non-missing ratings
 imp_m[!is.na(movies$rating_miss)] <- movies$rating_miss[!is.na(movies$rating_miss)]
 ```
+
+The analysis model of interest is fit to each of the $m$ imputed datasets. 
+
+```{r}
+# Fit the analysis model to the imputed dataset 
+fit_m <- lm(formula = imp_m ~ log(votes) + runtime + is_comedy + is_drama, 
+              data = movies)
+
+# Save the analysis model coefficients
+fit_m_coeff <- fit_m$coefficients
+
+# Save the analysis  model covariance matrix
+fit_m_cov <- vcov(fit_m)
+```
