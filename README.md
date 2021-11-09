@@ -341,9 +341,6 @@ series %>%
   dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), 
                                     dplyr::lag(x = rating_miss, n = 1, default = NA), 
                                     rating_miss)) -> series
-```
-
-```{r}
 # Check your imputations for the Great British Baking Show
 series %>% 
   dplyr::filter(series_name == "The Great British Baking Show") %>% 
