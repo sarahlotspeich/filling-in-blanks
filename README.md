@@ -423,3 +423,17 @@ runtime     -0.0009934479 -0.0002168729  2.932595e-05  0.000257734 -0.0003179052
 is_comedy   -0.0649503672 -0.0018058410  2.577340e-04  0.067824794  0.0179655741
 is_drama     0.0103304061 -0.0013836084 -3.179052e-04  0.017965574  0.0711337253
 ```
+
+This model is fit only once, but we wanted multiple, different imputed datasets didn't we? *We did.*
+
+Within each of the `m` imputations (we assume `m = 20`), we draw coefficients from the distribution based on the imputation model above and calculate imputed values. Outline this process of drawing coefficients and calculating imputed values below. 
+
+```{r}
+# Draw coefficients from the multivariate normal distribution based on `imp_mod`
+coeff_b <- mvrnorm(n = 1, mu = imp_coeff, Sigma = imp_cov)
+# Use the drawn coefficients to calculate imputed values 
+imp_b <- coeff_b[1] + coeff_b[2] * log(movies$votes) + coeff_b[3] * movies$runtime + 
+  coeff_b[4] * movies$is_comedy + coeff_b[5] * movies$is_drama
+# Replace with the non-missing ratings
+imp_b[!is.na(movies$rating_miss)] <- movies$rating_miss[!is.na(movies$rating_miss)]
+```
