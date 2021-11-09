@@ -495,6 +495,7 @@ Use Rubin's Rules to pool the parameter and covariance estimates from the `m` im
 ## Extract the coefficient estimates from each model 
 all_imp_coeff <- do.call(rbind, lapply(X = all_imp, FUN = coefficients))
 head(all_imp_coeff)
+
      (Intercept) log(votes)     runtime  is_comedy   is_drama
 [1,]    6.441845  0.1864583 -0.01711640 -0.4077372 0.13169405
 [2,]    6.264469  0.1427084 -0.01257280 -0.1759375 0.08324976
@@ -505,6 +506,29 @@ head(all_imp_coeff)
 
 ## Calculate the mean coefficient for each variable 
 (beta_hat <- colMeans(all_imp_coeff))
+
 (Intercept)  log(votes)     runtime   is_comedy    is_drama 
  6.44014194  0.17390227 -0.01651444 -0.33668693  0.15367396 
+ 
+ ## Extract the coefficients' variance estimates from each model 
+all_imp_var <- do.call(rbind, lapply(X = all_imp, FUN = function(f) diag(vcov(f))))
+
+## Calculate the within-imputation variance for each variable 
+within_var <- colMeans(all_imp_var)
+
+## Calculate the between-imputation variance for each variable
+### Subtract beta_hat from each imputation's coefficients 
+d <- all_imp_coeff - matrix(data = beta_hat, nrow = nrow(all_imp_coeff), ncol = ncol(all_imp_coeff), byrow = TRUE)
+
+### Sum over the squared values of d (within each coefficient)
+s <- colSums(d ^ 2)
+
+### Pre-multiply by m / (m + 1)
+between_var <- m / (m + 1) * s 
+
+## Calculate the pooled variance = within + between 
+(var_beta_hat <- within_var + between_var)
+
+ (Intercept)   log(votes)      runtime    is_comedy     is_drama 
+0.3898924963 0.0091151170 0.0000679755 0.1131340931 0.1196680400 
 ```
