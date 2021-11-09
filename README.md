@@ -412,7 +412,7 @@ imp_mod <- lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + is_dram
 
 ```{r}
 # Save the imputation model covariance matrix
-imp_cov <- vcov(imp_mod)
+(imp_cov <- vcov(imp_mod))
 ```
 
 ```{r}
