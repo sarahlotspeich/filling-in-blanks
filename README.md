@@ -429,27 +429,60 @@ This model is fit only once, but we wanted multiple, different imputed datasets 
 Within each of the `m` imputations (we assume `m = 20`), we draw coefficients from the distribution based on the imputation model above and calculate imputed values. Outline this process of drawing coefficients and calculating imputed values below. 
 
 ```{r}
-# Draw coefficients from the multivariate normal distribution based on `imp_mod`
+# Step 1: Imputation
+## Draw coefficients from the multivariate normal distribution based on `imp_mod`
 coeff_m <- mvrnorm(n = 1, mu = imp_coeff, Sigma = imp_cov)
 
-# Use the drawn coefficients to calculate imputed values 
+## Use the drawn coefficients to calculate imputed values 
 imp_m <- coeff_m[1] + coeff_m[2] * log(movies$votes) + coeff_m[3] * movies$runtime + coeff_m[4] * movies$is_comedy 
             + coeff_m[5] * movies$is_drama
 
-# Replace with the non-missing ratings
+## Replace with the non-missing ratings
 imp_m[!is.na(movies$rating_miss)] <- movies$rating_miss[!is.na(movies$rating_miss)]
 ```
 
 The analysis model of interest is fit to each of the $m$ imputed datasets. 
 
 ```{r}
-# Fit the analysis model to the imputed dataset 
+# Step 2: Analysis 
+## Fit the analysis model to the imputed dataset 
 fit_m <- lm(formula = imp_m ~ log(votes) + runtime + is_comedy + is_drama, 
               data = movies)
 
-# Save the analysis model coefficients
+## Save the analysis model coefficients
 fit_m_coeff <- fit_m$coefficients
 
-# Save the analysis  model covariance matrix
+## Save the analysis  model covariance matrix
 fit_m_cov <- vcov(fit_m)
+```
+
+Now, embed your code from Steps 1--2 into a *multiple* imputation framework (i.e., we want to repeat this process $m$ times).
+
+```{r}
+# We use 20 imputations 
+m <- 20 
+
+# Create a list to store model fits from each round of imputation 
+all_imp <- list()
+
+# Repeat Imputation & Analysis steps m times 
+for (k in 1:m) {
+  # Step 1: Imputation 
+  ## Draw coefficients from the multivariate normal distribution based on `imp_mod`
+  coeff_m <- mvrnorm(n = 1, mu = imp_coeff, Sigma = imp_cov)
+  ## Use the drawn coefficients to calculate imputed values 
+  imp_m <- coeff_m[1] + coeff_m[2] * log(movies$votes) + coeff_m[3] * movies$runtime + coeff_m[4] * movies$is_comedy + coeff_m[5] * movies$is_drama
+  ## Replace with the non-missing ratings
+  imp_m[!is.na(movies$rating_miss)] <- movies$rating_miss[!is.na(movies$rating_miss)]
+  # Step 2: Analysis
+  ## Fit the analysis model to the imputed dataset 
+  fit_m <- lm(formula = imp_m ~ log(votes) + runtime + is_comedy + is_drama, 
+                data = movies)
+  ## Save the analysis model coefficients
+  fit_m_coeff <- fit_m$coefficients
+  ## Save the analysis  model covariance matrix
+  fit_m_cov <- vcov(fit_m)
+  # Save fit_m in all_imp list 
+  all_imp[[length(all_imp) + 1]] <- fit_m
+}
 ```
