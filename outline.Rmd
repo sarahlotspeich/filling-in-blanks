@@ -21,7 +21,6 @@ library(dplyr)
 library(ggplot2)
 library(geepack)
 library(MASS)
-library(mice)
 ```
 
 # Data 
