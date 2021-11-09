@@ -213,7 +213,9 @@ For example, we might replace missing movie `rating_miss` with the mean or media
 ```{r}
 # Replace missing rating_miss values with the mean of the non-missing values 
 movies %>% 
-  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), mean(rating_miss, na.rm = TRUE), rating_miss)) -> movies
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), 
+                                    mean(rating_miss, na.rm = TRUE), 
+                                    rating_miss)) -> movies
 head(movies)
         series_name rating votes runtime is_comedy is_drama rating_miss rating_imp
 1      An Easy Girl    5.5  1519      92         1        1          NA   6.180519
@@ -225,7 +227,8 @@ head(movies)
 ```
 
 ```{r}
-# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+# Fit the single imputation model (i.e., using your singly imputed rating value 
+## from the previous chunk)
 summary(lm(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
         data = movies))
 ```
@@ -271,7 +274,9 @@ Consider data on the Great British Baking Show.... there are 109 episodes. Of th
 # Replace missing rating_miss values with the mean of the non-missing values *for the same series*
 series %>% 
   dplyr::group_by(series_name) %>% 
-  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), mean(rating_miss, na.rm = TRUE), rating_miss)) -> series
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), 
+                                    mean(rating_miss, na.rm = TRUE), 
+                                    rating_miss)) -> series
 ```
 
 ```{r}
@@ -289,7 +294,8 @@ series %>%
 ```
 
 ```{r}
-# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+# Fit the single imputation model (i.e., using your singly imputed rating value 
+## from the previous chunk)
 summary(geepack::geese(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
                data = series, 
                id = series_num))
@@ -332,7 +338,9 @@ Number of clusters:   270   Maximum cluster size: 1011
 # Replace missing rating_miss values with the preceding non-missing value *for the same series*
 series %>% 
   dplyr::group_by(series_num) %>% 
-  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), dplyr::lag(x = rating_miss, n = 1, default = NA), rating_miss)) -> series
+  dplyr::mutate(rating_imp = ifelse(is.na(rating_miss), 
+                                    dplyr::lag(x = rating_miss, n = 1, default = NA), 
+                                    rating_miss)) -> series
 ```
 
 ```{r}
@@ -350,7 +358,8 @@ series %>%
 ```
 
 ```{r}
-# Fit the single imputation model (i.e., using your singly imputed rating value from the previous chunk)
+# Fit the single imputation model (i.e., using your singly imputed rating value 
+## from the previous chunk)
 summary(geepack::geese(formula = rating_imp ~ log(votes) + runtime + is_comedy + is_drama, 
                data = series, 
                id = series_num))
