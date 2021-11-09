@@ -392,3 +392,17 @@ Correlation Model:
 Returned Error Value:    0 
 Number of clusters:   270   Maximum cluster size: 980 
 ```
+
+# Multiple Imputation 
+
+Use subjects without missing data to fit the imputation model for `rating_miss` in the `movies` data. Save the model coefficients and their covariance matrix. 
+
+```{r}
+# Fit the imputation model for movies rating (complete-case) 
+imp_mod <- lm(formula = rating_miss ~ log(votes) + runtime + is_comedy + is_drama, 
+              data = movies)
+# Save the imputation model coefficients
+imp_coeff <- imp_mod$coefficients
+# Save the imputation model covariance matrix
+imp_cov <- vcov(imp_mod)
+```
