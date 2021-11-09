@@ -433,7 +433,8 @@ Within each of the `m` imputations (we assume `m = 20`), we draw coefficients fr
 coeff_b <- mvrnorm(n = 1, mu = imp_coeff, Sigma = imp_cov)
 
 # Use the drawn coefficients to calculate imputed values 
-imp_b <- coeff_b[1] + coeff_b[2] * log(movies$votes) + coeff_b[3] * movies$runtime + coeff_b[4] * movies$is_comedy + coeff_b[5] * movies$is_drama
+imp_b <- coeff_b[1] + coeff_b[2] * log(movies$votes) + coeff_b[3] * movies$runtime + coeff_b[4] * movies$is_comedy + 
+         coeff_b[5] * movies$is_drama
 
 # Replace with the non-missing ratings
 imp_b[!is.na(movies$rating_miss)] <- movies$rating_miss[!is.na(movies$rating_miss)]
