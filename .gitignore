@@ -10,3 +10,5 @@ outline_cache/latex/__packages
 *.pdf
 
 *.rdx
+
+results/models.xlsx
